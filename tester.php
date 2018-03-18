@@ -1,5 +1,15 @@
 <?php
 
+
+require_once __DIR__.'/app/autoload.php';
+// require_once __DIR__.'/app/bootstrap.php.cache';
+require_once __DIR__.'/app/AppKernel.php';
+require __DIR__.'/vendor/autoload.php';
+
+use Symfony\Bundle\FrameworkBundle\Console\Application;
+use Symfony\Component\Console\Input\ArgvInput;
+use Symfony\Component\Console\Output\BufferedOutput;
+
 class MauticPatchTester
 {
 	public $localfile = 'patch-to-apply.patch';
@@ -13,12 +23,28 @@ class MauticPatchTester
 			'remove'
 		);
 
-		$task = $_REQUEST['task'];
-		$patch = $_REQUEST['patch'];
+
+
+		$task = isset($_REQUEST['task']) ? $_REQUEST['task'] : '';
+		$patch = isset($_REQUEST['patch']) ? $_REQUEST['patch'] : '';
+		$cmd = isset($_REQUEST['cmd']) ? $_REQUEST['cmd'] : '';
 
 		// Controller
 		if (in_array($task, $allowedTasks)) {
-		    $this->$task($patch);
+			@set_time_limit(9999);
+			if(empty($cmd)) {
+				$cmd = [];
+			}
+			$count = 2 + count($cmd);
+			$counter = 1;
+			file_put_contents(__DIR__ . '/progress.json', json_encode(['progress'=>floor((100/$count)*$counter)]));
+			$this->$task($patch);
+			foreach ($cmd as $c => $value) {
+				$counter++;
+				file_put_contents(__DIR__ . '/progress.json', json_encode(['progress'=>floor((100/$count)*$counter)]));
+				$this->executeCommand($c);
+			}
+			file_put_contents(__DIR__ . '/progress.json', json_encode(['progress'=>100]));
 		}
 		else
 		{
@@ -46,6 +72,36 @@ class MauticPatchTester
 			return $result;
 		} else {
 			echo 'Could not remove Patch';
+		}
+	}
+
+	function executeCommand($cmd){
+
+		// cache clear by remove dir
+		if($cmd == "cache:clear"){
+			return exec('rm -r app/cache/prod/');
+		}
+
+		$fullCommand = explode(' ', $cmd);
+		$command = $fullCommand[0];
+		$argsCount = count($fullCommand) - 1;
+		$args = array('console', $command);
+		if ($argsCount) {
+			for ($i = 1; $i <= $argsCount; $i++) {
+				$args[] = $fullCommand[$i];
+			}
+		}
+		defined('IN_MAUTIC_CONSOLE') or define('IN_MAUTIC_CONSOLE', 1);
+		try {
+			$input  = new ArgvInput($args);
+			$output = new BufferedOutput();
+			$kernel = new AppKernel('prod', false);
+			$app    = new Application($kernel);
+			$app->setAutoExit(false);
+			$result = $app->run($input, $output);
+			echo "<pre>\n".$output->fetch().'</pre>';
+		} catch (\Exception $exception) {
+			echo $exception->getMessage();
 		}
 	}
 
@@ -110,6 +166,8 @@ class MauticPatchTester
 
 			<div class="row">
 				<div class="col">
+					<form id="apply-form" action="" method="post">
+						<input type="hidden" name="task" value="apply">
 					<div class="card">
 						<div class="card-body">
 							<div class="card-title">
@@ -121,13 +179,38 @@ class MauticPatchTester
 									<input type='text' id='apply-patch' name='patch' class='form-control' />
 								    <small class="form-text text-muted">e.g. Simply enter 3456 for PR #3456</small>
 								</div>
+								<div class="form-group">
+									<h5>Run after apply pull request</h5>
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" class="cmd" id="cache-clear" name="cmd[cache:clear]" value="1">
+											<label for="cache-clear">clear cache</label>
+										</label>
+									</div>
+									<div class="checkbox">
+										<label>
+											<input class="cmd" type="checkbox" id="dsu" name="cmd[doctrine:schema:update --force]" value="1">
+											<label for="dsu">doctrine:schema:update --force</label>
+									</div>
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="mag" class="cmd" name="cmd[mautic:assets:generate]" value="1">
+											<label for="mag">mautic:assets:generate</label>
+											<small style="color:red">(it can take a few minutes)</small>
+										</label>
+									</div>
+								</div>
 								<span class="pt-3 text-small float-right text-success" id="pr-applied-message"></span>
-								<a href="#" id="apply" class="btn btn-success btn-lg" data-loading-text="Applying...">Apply PR</a>	
+								<input type="submit"  id="apply" class="btn btn-success btn-lg" data-loading-text="Applying..." value="Apply PR"/>
 							</div>
 						</div>
 					</div>
+					</form>
 				</div>
 				<div class="col">
+					<form id="remove-form" action="" method="post">
+					<input type="hidden" name="task" value="remove">
+
 					<div class="card card-danger">
 						<div class="card-body">
 							<div class="card-title">
@@ -139,14 +222,35 @@ class MauticPatchTester
 									<input type='text' id='remove-patch' name='patch' class='form-control' />
 								    <small class="form-text text-muted">e.g. Simply enter 3456 for PR #3456</small>
 								</div>
+								<div class="form-group">
+									<h5>Run after remove pull request</h5>
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" class="cmd" id="cache-clear-r" name="cmd[cache:clear]" value="1">
+											<label for="cache-clear-r">clear cache</label>
+										</label>
+									</div>
+									<div class="checkbox">
+										<label>
+											<input class="cmd" type="checkbox" id="dsu-r" name="cmd[doctrine:schema:update --force]" value="1">
+											<label for="dsu-r">doctrine:schema:update --force</label>
+									</div>
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="mag-r" class="cmd" name="cmd[mautic:assets:generate]" value="1">
+											<label for="mag-r">mautic:assets:generate</label>
+											<small style="color:red">(it can take a few minutes)</small>
+										</label>
+									</div>
 								<span class="pt-3 text-small float-right text-danger" id="pr-removed-message"></span>
-								<a href="#" id="remove" class="btn btn-danger btn-lg" data-loading-text="Removing...">Remove PR</a>	
+									<input type="submit"  id="remove" class="btn btn-success btn-lg" data-loading-text="Removing..." value="Remove PR"/>
 							</div>
 						</div>
 					</div>
-				</div>
+						</form>
 			</div>
-			
+			</div>
+			</div>
 			<div class="text-muted pt-4"><small>*This app does not yet take into account any pull requests that require database changes.</small></div>
 
 
@@ -167,17 +271,18 @@ class MauticPatchTester
 				if (!( finished )) {
 					setTimeout(function () {
 						progress();
-					}, 100);
+					}, 1000);
 				}
 			}
 			jQuery(document).ready(function () {				
-				jQuery('#apply').click(function () {
+				jQuery('#apply-form').on( "submit", function( e ) {
+					e.preventDefault();
 					var patch = jQuery('#apply-patch').val();
-					if(!patch) { alert('Please enter a valid PR'); return; }
+					if(!patch) {  alert('Please enter a valid PR'); return false; }
 					setTimeout(function () {
 						progress();
 					}, 1000);
-					jQuery.ajax({'url': './tester.php', 'data': {'task': 'apply', 'patch': parseInt(patch)}, 'type': 'post', 'dataType': 'text'})
+					jQuery.ajax({'url': './tester.php', 'data': $( this ).serializeArray(), 'type': 'post', 'dataType': 'text'})
 						.done(function () {
 							jQuery('.progress-bar').css('width', '100%');
 							jQuery('.label-info').html('100%');
@@ -185,14 +290,16 @@ class MauticPatchTester
 							jQuery('#pr-applied-message').html('PR #'+patch+' successfully applied');
 							jQuery('#apply-patch').val('');					
 						});
+					return false;
 				});
-				jQuery('#remove').click(function () {
+				jQuery('#remove-form').on( "submit", function( e ) {
+					e.preventDefault();
 					var patch = jQuery('#remove-patch').val();
 					if(!patch) { alert('Please enter a valid PR'); return; }
 					setTimeout(function () {
 						progress();
 					}, 1000);
-					jQuery.ajax({'url': './tester.php', 'data': {'task': 'remove', 'patch': parseInt(patch)}, 'type': 'post', 'dataType': 'text'})
+					jQuery.ajax({'url': './tester.php', 'data': $( this ).serializeArray(), 'type': 'post', 'dataType': 'text'})
 						.done(function () {
 							jQuery('.progress-bar').css('width', '100%');
 							jQuery('.label-info').html('100%');
