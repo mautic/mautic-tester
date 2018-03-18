@@ -184,7 +184,7 @@ class MauticPatchTester
 									<div class="checkbox">
 										<label>
 											<input type="checkbox" class="cmd" id="cache-clear" name="cmd[cache:clear]" value="1">
-											<label for="cache-clear">clear:cache</label>
+											<label for="cache-clear">clear cache</label>
 										</label>
 									</div>
 									<div class="checkbox">
@@ -227,7 +227,7 @@ class MauticPatchTester
 									<div class="checkbox">
 										<label>
 											<input type="checkbox" class="cmd" id="cache-clear-r" name="cmd[cache:clear]" value="1">
-											<label for="cache-clear-r">clear:cache</label>
+											<label for="cache-clear-r">clear cache</label>
 										</label>
 									</div>
 									<div class="checkbox">
