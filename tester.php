@@ -189,13 +189,13 @@ class MauticPatchTester
 									</div>
 									<div class="checkbox">
 										<label>
-											<input class="cmd" type="checkbox" id="mag" name="cmd[doctrine:schema:update --force]" value="1">
-											<label for="mag">doctrine:schema:update --force</label>
+											<input class="cmd" type="checkbox" id="dsu" name="cmd[doctrine:schema:update --force]" value="1">
+											<label for="dsu">doctrine:schema:update --force</label>
 									</div>
 									<div class="checkbox">
 										<label>
-											<input type="checkbox" id="dsu" class="cmd" name="cmd[mautic:assets:generate]" value="1">
-											<label for="dsu">mautic:assets:generate</label>
+											<input type="checkbox" id="mag" class="cmd" name="cmd[mautic:assets:generate]" value="1">
+											<label for="mag">mautic:assets:generate</label>
 											<small style="color:red">(it can take a few minutes)</small>
 										</label>
 									</div>
@@ -208,6 +208,9 @@ class MauticPatchTester
 					</form>
 				</div>
 				<div class="col">
+					<form id="remove-form" action="" method="post">
+					<input type="hidden" name="task" value="remove">
+
 					<div class="card card-danger">
 						<div class="card-body">
 							<div class="card-title">
@@ -219,14 +222,35 @@ class MauticPatchTester
 									<input type='text' id='remove-patch' name='patch' class='form-control' />
 								    <small class="form-text text-muted">e.g. Simply enter 3456 for PR #3456</small>
 								</div>
+								<div class="form-group">
+									<h5>Run after remove pull request</h5>
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" class="cmd" id="cache-clear-r" name="cmd[cache:clear]" value="1">
+											<label for="cache-clear-r">clear:cache</label>
+										</label>
+									</div>
+									<div class="checkbox">
+										<label>
+											<input class="cmd" type="checkbox" id="dsu-r" name="cmd[doctrine:schema:update --force]" value="1">
+											<label for="dsu-r">doctrine:schema:update --force</label>
+									</div>
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="mag-r" class="cmd" name="cmd[mautic:assets:generate]" value="1">
+											<label for="mag-r">mautic:assets:generate</label>
+											<small style="color:red">(it can take a few minutes)</small>
+										</label>
+									</div>
 								<span class="pt-3 text-small float-right text-danger" id="pr-removed-message"></span>
-								<a href="#" id="remove" class="btn btn-danger btn-lg" data-loading-text="Removing...">Remove PR</a>	
+									<input type="submit"  id="remove" class="btn btn-success btn-lg" data-loading-text="Removing..." value="Remove PR"/>
 							</div>
 						</div>
 					</div>
-				</div>
+						</form>
 			</div>
-			
+			</div>
+			</div>
 			<div class="text-muted pt-4"><small>*This app does not yet take into account any pull requests that require database changes.</small></div>
 
 
@@ -268,13 +292,14 @@ class MauticPatchTester
 						});
 					return false;
 				});
-				jQuery('#remove').click(function () {
+				jQuery('#remove-form').on( "submit", function( e ) {
+					e.preventDefault();
 					var patch = jQuery('#remove-patch').val();
 					if(!patch) { alert('Please enter a valid PR'); return; }
 					setTimeout(function () {
 						progress();
 					}, 1000);
-					jQuery.ajax({'url': './tester.php', 'data': {'task': 'remove', 'patch': parseInt(patch)}, 'type': 'post', 'dataType': 'text'})
+					jQuery.ajax({'url': './tester.php', 'data': $( this ).serializeArray(), 'type': 'post', 'dataType': 'text'})
 						.done(function () {
 							jQuery('.progress-bar').css('width', '100%');
 							jQuery('.label-info').html('100%');
