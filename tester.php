@@ -14,10 +14,12 @@ class MauticPatchTester
 {
 	public $localfile = 'patch-to-apply.patch';
 	public $url = 'https://patch-diff.githubusercontent.com/raw/mautic/mautic/pull/';
+	public $testerfilename;
 
 	public function __construct()
 	{
 
+		$this->testerfilename =  basename(__FILE__);
 		$allowedTasks = array(
 			'apply',
 			'remove'
@@ -274,7 +276,7 @@ class MauticPatchTester
 					}, 1000);
 				}
 			}
-			jQuery(document).ready(function () {				
+			jQuery(document).ready(function () {
 				jQuery('#apply-form').on( "submit", function( e ) {
 					e.preventDefault();
 					var patch = jQuery('#apply-patch').val();
@@ -282,13 +284,13 @@ class MauticPatchTester
 					setTimeout(function () {
 						progress();
 					}, 1000);
-					jQuery.ajax({'url': './tester.php', 'data': $( this ).serializeArray(), 'type': 'post', 'dataType': 'text'})
+					jQuery.ajax({'url': './<?php echo $this->testerfilename ?>', 'data': $( this ).serializeArray(), 'type': 'post', 'dataType': 'text'})
 						.done(function () {
 							jQuery('.progress-bar').css('width', '100%');
 							jQuery('.label-info').html('100%');
 							finished = true;
 							jQuery('#pr-applied-message').html('PR #'+patch+' successfully applied');
-							jQuery('#apply-patch').val('');					
+							jQuery('#apply-patch').val('');
 						});
 					return false;
 				});
@@ -299,13 +301,13 @@ class MauticPatchTester
 					setTimeout(function () {
 						progress();
 					}, 1000);
-					jQuery.ajax({'url': './tester.php', 'data': $( this ).serializeArray(), 'type': 'post', 'dataType': 'text'})
+					jQuery.ajax({'url': './<?php echo $this->testerfilename ?>', 'data': $( this ).serializeArray(), 'type': 'post', 'dataType': 'text'})
 						.done(function () {
 							jQuery('.progress-bar').css('width', '100%');
 							jQuery('.label-info').html('100%');
 							finished = true;
 							jQuery('#pr-removed-message').html('PR #'+patch+' successfully removed');
-							jQuery('#remove-patch').val('');						
+							jQuery('#remove-patch').val('');
 						});
 				});
 
