@@ -77,9 +77,11 @@ class MauticPatchTester
 
 	function executeCommand($cmd){
 
-		// cache clear by remove dir
+		// cache clear by remove dir, not by command due performance
 		if($cmd == "cache:clear"){
-			return exec('rm -r app/cache/prod/');
+			@exec('rm -r app/cache/dev/');
+			@exec('rm -r app/cache/prod/');
+			return;
 		}
 
 		$fullCommand = explode(' ', $cmd);
