@@ -24,4 +24,3 @@ Require `git` installed on your server, but not a git repository (https://gist.g
 `3343` will test https://www.github.com/mautic/mautic/pull/3343
 
 #### Do not use in production environment.
-
