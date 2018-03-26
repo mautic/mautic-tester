@@ -9,6 +9,8 @@ Mautic Pull Request Tester is an app, which will let you test simple pull reques
 3. Upload the unzipped tester.php to the folder on your server where your existing Mautic instance is installed.
 4. Go to the URL where your Mautic runs and add `/tester.php` behind the last slash. Example: `https://www.mautic.myweb.com/tester.php`.
 
+Requires `git` installed on your server, but not a git repository (https://gist.github.com/derhuerst/1b15ff4652a867391f03)
+
 #### Applying a PR
 1. Add a PR to your Mautic instance by entering the number for a pull request.
 2. Click Apply PR. 
