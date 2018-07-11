@@ -278,8 +278,6 @@ class MauticPatchTester
         <div class="text-muted pt-4">
             <small>*This app does not yet take into account any pull requests that require database changes.</small>
         </div>
-
-
         </div>
         <!-- /container -->
 
